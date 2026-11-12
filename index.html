@@ -32,7 +32,7 @@
 
     <button id="start-btn">🎬 پخش انیمیشن</button>
     <canvas id="animation-canvas"></canvas>
-    <audio id="bg-music" src="music.mp3"></audio>
+    <audio id="bg-music" src="music.mp3" preload="auto"></audio>
 
     <script>
         const canvas = document.getElementById('animation-canvas');
@@ -44,82 +44,84 @@
         const startBtn = document.getElementById('start-btn');
 
         let isPlaying = false;
-        let startTime = 0;
-        let animationFrameId;
-
-        // 🚨 متن‌هایی که قراره روی در مدرسه بیان
+        
+        // متن‌هایی که قراره روی در مدرسه بیان
         const lines = [
             "تهیه کننده : رضا سلیمانی",
             "مدرسه شجره میناب"
         ];
 
-        // موقعیت اولیه متن‌ها (از بالای در شروع میشن)
-        let textYPositions = [-50, -120]; 
-        let speed = 1.2; // سرعت حرکت به پایین
+        // 🚨 تنظیمات موقعیت در مدرسه (این اعداد رو بر اساس عکس تنظیم کردم)
+        // اگر متن کمی چپ یا راست بود، عدد textX رو تغییر بده
+        let textX = 0; // مقدار دقیق تر در تابع animate محاسبه میشه
+        let startY = 0; // نقطه شروع روی در
+        let endY = 0;   // نقطه پایان روی در
+        
+        // آرایه برای نگه داشتن موقعیت Y هر متن
+        let currentYPositions = [];
 
         bgImage.onload = () => {
             canvas.width = bgImage.width;
             canvas.height = bgImage.height;
+            
+            // 🚨 تنظیم دقیق مختصات در مدرسه (نسبت به عرض و ارتفاع عکس)
+            textX = canvas.width * 0.77; // روی در آبی سمت راست
+            startY = canvas.height * 0.38; // از بالای در شروع بشه
+            endY = canvas.height * 0.75;   // تا پایین در ادامه داشته باشه
+            
+            // تعیین موقعیت اولیه متن‌ها (بالای در)
+            currentYPositions = [startY, startY - 60]; // متن دوم کمی بالاتر شروع میشه
+            
             ctx.drawImage(bgImage, 0, 0); 
         };
 
         startBtn.addEventListener('click', () => {
             startBtn.style.display = 'none';
             isPlaying = true;
-            startTime = Date.now();
             
-            // پخش موزیک (با تایمر ۱۵ ثانیه)
-            audio.play().catch(e => console.log("خطا در پخش صدا:", e));
-            setTimeout(() => {
-                audio.pause();
-                audio.currentTime = 0;
-            }, 15000); // موزیک بعد از 15 ثانیه قطع میشه
-
+            audio.play().catch(e => console.log("خطای پخش صدا:", e));
             animate();
         });
 
         function animate() {
-            // اگر انیمیشن متوقف شده، برگرد
             if (!isPlaying) return;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(bgImage, 0, 0);
 
-            // 🚨 محاسبه موقعیت افقی متن (روی در مدرسه - سمت راست)
-            // 75% عرض عکس رو برای در مدرسه در نظر گرفتیم
-            const textX = canvas.width * 0.75; 
-            const fontSize = canvas.width * 0.025; // سایز فونت مناسب
+            const fontSize = canvas.width * 0.025; 
 
             lines.forEach((text, index) => {
-                drawTextOnDoor(text, textX, textYPositions[index], fontSize);
-                textYPositions[index] += speed; // حرکت به پایین
+                // رسم متن در موقعیت فعلی
+                drawTextOnDoor(text, textX, currentYPositions[index], fontSize);
+                
+                // حرکت به سمت پایین
+                currentYPositions[index] += 1.2; 
             });
 
-            // اگر متن از پایین صفحه خارج شد، متوقفش کن
-            if (textYPositions[1] > canvas.height + 50) {
-                isPlaying = false; // توقف انیمیشن متن
+            // 🚨 اگر متن آخر از پایین در عبور کرد، انیمیشن متوقف بشه
+            if (currentYPositions[0] > endY) {
+                isPlaying = false; 
             } else {
-                animationFrameId = requestAnimationFrame(animate);
+                requestAnimationFrame(animate);
             }
         }
 
-        // 🚨 تابع رسم متن با استایل خاص روی در
         function drawTextOnDoor(text, x, y, fontSize) {
             ctx.font = `bold ${fontSize}px Tahoma, Arial`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
 
-            // سایه مشکی برای خوانایی روی پس‌زمینه رنگی
-            ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-            ctx.shadowBlur = 8;
-            ctx.shadowOffsetX = 3;
-            ctx.shadowOffsetY = 3;
+            // سایه قوی برای خوانایی روی در
+            ctx.shadowColor = "rgba(0, 0, 0, 1)";
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetX = 4;
+            ctx.shadowOffsetY = 4;
 
-            // رنگ متن طلایی
+            // رنگ متن: زرد طلایی
             ctx.fillStyle = "#FFD700"; 
             ctx.fillText(text, x, y);
 
-            // برگرداندن سایه به حالت اول
             ctx.shadowColor = "transparent";
         }
     </script>
