@@ -50,11 +50,10 @@
             "مدرسه شجره میناب"
         ];
 
-        // 🚨 مختصات دقیق کادر صورتی روی در سمت راست
-        // این اعداد رو از روی عکس شما تخمین زدم (نسبت به ابعاد اصلی عکس)
-        const boxCenterX = 0.725; // وسط کادر صورتی به صورت افقی (72.5% عرض عکس)
-        const boxStartY = 0.35;   // بالای کادر صورتی (35% ارتفاع عکس)
-        const boxEndY = 0.75;     // پایین کادر صورتی (75% ارتفاع عکس)
+        // 🚨 مختصات دقیق از روی عکس شما
+        const targetX = 1066; 
+        const startY = 511; 
+        const endY = 827;   
 
         let textYPositions = []; 
 
@@ -62,9 +61,8 @@
             canvas.width = bgImage.width;
             canvas.height = bgImage.height;
             
-            // تنظیم موقعیت اولیه متن‌ها در بالای کادر صورتی
-            const startYPixel = canvas.height * boxStartY;
-            textYPositions = [startYPixel, startYPixel - (canvas.height * 0.05)]; // متن دوم کمی بالاتر
+            // تنظیم موقعیت اولیه متن‌ها
+            textYPositions = [startY, startY - 30]; // متن اول دقیقاً روی نقطه شروع، متن دوم 30 پیکسل بالاتر
             
             ctx.drawImage(bgImage, 0, 0); 
         };
@@ -83,19 +81,17 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(bgImage, 0, 0);
 
-            // محاسبه X دقیق (مرکز کادر)
-            const textX = canvas.width * boxCenterX;
-            const fontSize = canvas.width * 0.022; // سایز فونت متناسب با عرض در
+            // سایز فونت رو کمی کوچیک کردم تا توی عرض در جا بشه
+            const fontSize = canvas.width * 0.018; 
 
             lines.forEach((text, index) => {
-                drawTextOnDoor(text, textX, textYPositions[index], fontSize);
+                drawTextOnDoor(text, targetX, textYPositions[index], fontSize);
                 // سرعت حرکت به پایین
                 textYPositions[index] += 1.2; 
             });
 
-            // 🚨 اگر متن دوم از پایین کادر صورتی عبور کرد، انیمیشن متوقف بشه
-            const endYPixel = canvas.height * boxEndY;
-            if (textYPositions[1] > endYPixel) {
+            // 🚨 اگر متن دوم از نقطه پایانی عبور کرد، انیمیشن متوقف بشه
+            if (textYPositions[1] > endY) {
                 isPlaying = false; 
             } else {
                 requestAnimationFrame(animate);
@@ -107,7 +103,7 @@
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
 
-            // سایه مشکی برای خوانایی
+            // سایه مشکی برای خوانایی روی در رنگی
             ctx.shadowColor = "rgba(0, 0, 0, 1)";
             ctx.shadowBlur = 8;
             ctx.shadowOffsetX = 3;
