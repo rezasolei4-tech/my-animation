@@ -50,19 +50,21 @@
             "مدرسه شجره میناب"
         ];
 
-        // 🚨 مختصات دقیق از روی عکس شما
+        // 🚨 مختصات دقیق
         const targetX = 1066; 
         const startY = 511; 
         const endY = 827;   
 
         let textYPositions = []; 
 
+        // 🚨 سرعت حرکت متن (هر چی کمتر باشه آروم‌تره)
+        const speed = 0.35; 
+
         bgImage.onload = () => {
             canvas.width = bgImage.width;
             canvas.height = bgImage.height;
             
-            // تنظیم موقعیت اولیه متن‌ها
-            textYPositions = [startY, startY - 30]; // متن اول دقیقاً روی نقطه شروع، متن دوم 30 پیکسل بالاتر
+            textYPositions = [startY, startY - 40]; 
             
             ctx.drawImage(bgImage, 0, 0); 
         };
@@ -81,16 +83,20 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(bgImage, 0, 0);
 
-            // سایز فونت رو کمی کوچیک کردم تا توی عرض در جا بشه
-            const fontSize = canvas.width * 0.018; 
+            const fontSize = canvas.width * 0.025; 
 
             lines.forEach((text, index) => {
-                drawTextOnDoor(text, targetX, textYPositions[index], fontSize);
-                // سرعت حرکت به پایین
-                textYPositions[index] += 1.2; 
+                let alpha = 1;
+                // افکت محو شدن در 150 پیکسل آخر
+                if (textYPositions[index] > endY - 150) {
+                    alpha = Math.max(0, (endY - textYPositions[index]) / 150);
+                }
+
+                drawTextOnDoor(text, targetX, textYPositions[index], fontSize, alpha);
+                // اعمال سرعت جدید
+                textYPositions[index] += speed; 
             });
 
-            // 🚨 اگر متن دوم از نقطه پایانی عبور کرد، انیمیشن متوقف بشه
             if (textYPositions[1] > endY) {
                 isPlaying = false; 
             } else {
@@ -98,22 +104,23 @@
             }
         }
 
-        function drawTextOnDoor(text, x, y, fontSize) {
+        function drawTextOnDoor(text, x, y, fontSize, alpha) {
             ctx.font = `bold ${fontSize}px Tahoma, Arial`;
             ctx.textAlign = "center";
             ctx.textBaseline = "middle";
 
-            // سایه مشکی برای خوانایی روی در رنگی
-            ctx.shadowColor = "rgba(0, 0, 0, 1)";
-            ctx.shadowBlur = 8;
-            ctx.shadowOffsetX = 3;
-            ctx.shadowOffsetY = 3;
+            ctx.globalAlpha = alpha;
 
-            // رنگ متن: زرد طلایی
+            ctx.shadowColor = "rgba(0, 0, 0, 1)";
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetX = 4;
+            ctx.shadowOffsetY = 4;
+
             ctx.fillStyle = "#FFD700"; 
             ctx.fillText(text, x, y);
 
             ctx.shadowColor = "transparent";
+            ctx.globalAlpha = 1;
         }
     </script>
 </body>
