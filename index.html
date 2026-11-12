@@ -6,52 +6,121 @@
     <title>انیمیشن مدرسه</title>
     <style>
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #000;
+            display: flex; justify-content: center; align-items: center;
+            font-family: Tahoma, sans-serif;
         }
-        #animation-canvas {
-            display: block;
-            max-width: 100%;
-            max-height: 100%;
+        #animation-canvas { display: block; max-width: 100%; max-height: 100%; }
+        
+        #start-btn {
+            position: absolute; z-index: 10;
+            padding: 15px 40px; font-size: 20px; font-weight: bold;
+            color: white; background: linear-gradient(145deg, #05a648, #06C755);
+            border: none; border-radius: 50px; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
 
+    <button id="start-btn">🎬 پخش انیمیشن</button>
     <canvas id="animation-canvas"></canvas>
+    <audio id="bg-music" src="music.mp3"></audio>
 
     <script>
         const canvas = document.getElementById('animation-canvas');
         const ctx = canvas.getContext('2d');
         let bgImage = new Image();
-        
         bgImage.src = 'background.jpg';
 
+        const audio = document.getElementById('bg-music');
+        const startBtn = document.getElementById('start-btn');
+
+        let isPlaying = false;
+        let startTime = 0;
+        let animationFrameId;
+
+        // 🚨 متن‌هایی که قراره روی در مدرسه بیان
+        const lines = [
+            "تهیه کننده : رضا سلیمانی",
+            "مدرسه شجره میناب"
+        ];
+
+        // موقعیت اولیه متن‌ها (از بالای در شروع میشن)
+        let textYPositions = [-50, -120]; 
+        let speed = 1.2; // سرعت حرکت به پایین
+
         bgImage.onload = () => {
-            // تنظیم ابعاد بوم دقیقاً به اندازه عکس اصلی
             canvas.width = bgImage.width;
             canvas.height = bgImage.height;
-            
-            // شروع انیمیشن
-            animate();
+            ctx.drawImage(bgImage, 0, 0); 
         };
 
-        function animate() {
-            // پاک کردن بوم
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        startBtn.addEventListener('click', () => {
+            startBtn.style.display = 'none';
+            isPlaying = true;
+            startTime = Date.now();
             
-            // رسم عکس در ابعاد اصلی خودش
+            // پخش موزیک (با تایمر ۱۵ ثانیه)
+            audio.play().catch(e => console.log("خطا در پخش صدا:", e));
+            setTimeout(() => {
+                audio.pause();
+                audio.currentTime = 0;
+            }, 15000); // موزیک بعد از 15 ثانیه قطع میشه
+
+            animate();
+        });
+
+        function animate() {
+            // اگر انیمیشن متوقف شده، برگرد
+            if (!isPlaying) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(bgImage, 0, 0);
 
-            // درخواست فریم بعدی
-            requestAnimationFrame(animate);
+            // 🚨 محاسبه موقعیت افقی متن (روی در مدرسه - سمت راست)
+            // 75% عرض عکس رو برای در مدرسه در نظر گرفتیم
+            const textX = canvas.width * 0.75; 
+            const fontSize = canvas.width * 0.025; // سایز فونت مناسب
+
+            lines.forEach((text, index) => {
+                drawTextOnDoor(text, textX, textYPositions[index], fontSize);
+                textYPositions[index] += speed; // حرکت به پایین
+            });
+
+            // اگر متن از پایین صفحه خارج شد، متوقفش کن
+            if (textYPositions[1] > canvas.height + 50) {
+                isPlaying = false; // توقف انیمیشن متن
+            } else {
+                animationFrameId = requestAnimationFrame(animate);
+            }
+        }
+
+        // 🚨 تابع رسم متن با استایل خاص روی در
+        function drawTextOnDoor(text, x, y, fontSize) {
+            ctx.font = `bold ${fontSize}px Tahoma, Arial`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            // سایه مشکی برای خوانایی روی پس‌زمینه رنگی
+            ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 3;
+            ctx.shadowOffsetY = 3;
+
+            // رنگ متن طلایی
+            ctx.fillStyle = "#FFD700"; 
+            ctx.fillText(text, x, y);
+
+            // برگرداندن سایه به حالت اول
+            ctx.shadowColor = "transparent";
         }
     </script>
 </body>
