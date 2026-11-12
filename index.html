@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>انیمیشن مدرسه</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000;
+        }
+        #animation-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="animation-canvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('animation-canvas');
+        const ctx = canvas.getContext('2d');
+        let bgImage = new Image();
+        
+        // 🚨 نام عکسی که آپلود کردی
+        bgImage.src = 'background.jpg';
+
+        bgImage.onload = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            animate();
+        };
+
+        function drawBackground() {
+            const scale = Math.max(canvas.width / bgImage.width, canvas.height / bgImage.height);
+            const x = (canvas.width / 2) - (bgImage.width / 2) * scale;
+            const y = (canvas.height / 2) - (bgImage.height / 2) * scale;
+            
+            ctx.drawImage(bgImage, x, y, bgImage.width * scale, bgImage.height * scale);
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBackground();
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
