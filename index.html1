@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>انیمیشن مدرسه</title>
+    <style>
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background-color: #000;
+            display: flex; justify-content: center; align-items: center;
+            font-family: Tahoma, sans-serif;
+        }
+        #animation-canvas { display: block; max-width: 100%; max-height: 100%; }
+        
+        #start-btn {
+            position: absolute; z-index: 10;
+            padding: 15px 40px; font-size: 20px; font-weight: bold;
+            color: white; background: linear-gradient(145deg, #05a648, #06C755);
+            border: none; border-radius: 50px; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <button id="start-btn">🎬 پخش انیمیشن</button>
+    <canvas id="animation-canvas"></canvas>
+    <audio id="bg-music" src="music.mp3" preload="auto"></audio>
+
+    <script>
+        const canvas = document.getElementById('animation-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 🚨 لود کردن عکس‌ها
+        let bgImage = new Image();
+        bgImage.src = 'background.jpg';
+
+        let char1 = new Image();
+        char1.src = 'char1.png'; // عکسی که آپلود کردی
+
+        const audio = document.getElementById('bg-music');
+        const startBtn = document.getElementById('start-btn');
+
+        let isPlaying = false;
+        
+        // تنظیمات متن‌های روی در
+        const lines = ["تهیه کننده : رضا سلیمانی", "مدرسه شجره میناب"];
+        const targetX = 1066; 
+        const startY = 511; 
+        const endY = 827;   
+        let textYPositions = []; 
+
+        // 🚨 تنظیمات کاراکتر اول
+        let charX = -200; // از سمت چپ بیرون صفحه شروع میکنه
+        let charY = 500;  // ارتفاع کاراکتر روی زمین
+        let charSpeed = 1.5; // سرعت راه رفتن
+        let charTargetX = canvas.width * 0.4; // نقطه ای که کاراکتر می ایسته (وسط صفحه)
+
+        // 🚨 تنظیمات دیالوگ
+        const dialogueText = "سلام! به مدرسه خوش آمدید 🌸";
+        let showDialogue = false;
+        let dialogueAlpha = 1;
+
+        bgImage.onload = () => {
+            canvas.width = bgImage.width;
+            canvas.height = bgImage.height;
+            
+            textYPositions = [startY, startY - 40]; 
+            charTargetX = canvas.width * 0.35; // تنظیم مجدد عرض بعد از لود عکس
+            charY = canvas.height * 0.65; // ارتفاع مناسب برای ایستادن روی زمین
+
+            ctx.drawImage(bgImage, 0, 0); 
+        };
+
+        startBtn.addEventListener('click', () => {
+            startBtn.style.display = 'none';
+            isPlaying = true;
+            
+            audio.play().catch(e => console.log("خطای پخش صدا:", e));
+            animate();
+        });
+
+        function animate() {
+            if (!isPlaying) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(bgImage, 0, 0);
+
+            // 1. رسم متن‌های روی در
+            const fontSize = canvas.width * 0.025; 
+            lines.forEach((text, index) => {
+                let alpha = 1;
+                if (textYPositions[index] > endY - 150) {
+                    alpha = Math.max(0, (endY - textYPositions[index]) / 150);
+                }
+                drawTextOnDoor(text, targetX, textYPositions[index], fontSize, alpha);
+                if (textYPositions[index] < endY) textYPositions[index] += 0.35; 
+            });
+
+            // 2. رسم و حرکت کاراکتر
+            if (char1.complete) {
+                // اگر کاراکتر هنوز به هدف نرسیده، به سمت راست حرکت کن
+                if (charX < charTargetX) {
+                    charX += charSpeed;
+                } else {
+                    // وقتی رسید، دیالوگ رو نشون بده
+                    showDialogue = true;
+                }
+
+                // رسم کاراکتر با حفظ نسبت تصویر
+                const charHeight = canvas.height * 0.4; // ارتفاع کاراکتر 40% صفحه
+                const charWidth = (char1.width / char1.height) * charHeight;
+                
+                ctx.drawImage(char1, charX, charY - charHeight, charWidth, charHeight);
+
+                // 3. نمایش دیالوگ
+                if (showDialogue) {
+                    drawDialogue(dialogueText, charX + (charWidth/2), charY - charHeight - 50);
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        function drawTextOnDoor(text, x, y, fontSize, alpha) {
+            ctx.font = `bold ${fontSize}px Tahoma, Arial`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.globalAlpha = alpha;
+            ctx.shadowColor = "rgba(0, 0, 0, 1)";
+            ctx.shadowBlur = 8;
+            ctx.shadowOffsetX = 3;
+            ctx.shadowOffsetY = 3;
+            ctx.fillStyle = "#FFD700"; 
+            ctx.fillText(text, x, y);
+            ctx.shadowColor = "transparent";
+            ctx.globalAlpha = 1;
+        }
+
+        // 🚨 تابع رسم کادر دیالوگ بالای سر کاراکتر
+        function drawDialogue(text, x, y) {
+            const fontSize = canvas.width * 0.02;
+            ctx.font = `bold ${fontSize}px Tahoma, Arial`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            // اندازه‌گیری متن برای کشیدن کادر
+            const textWidth = ctx.measureText(text).width;
+            const padding = 15;
+            const boxWidth = textWidth + padding * 2;
+            const boxHeight = fontSize + padding * 2;
+
+            // رسم کادر سفید با گوشه‌های گرد
+            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+            ctx.beginPath();
+            ctx.roundRect(x - boxWidth/2, y - boxHeight/2, boxWidth, boxHeight, 10);
+            ctx.fill();
+            ctx.strokeStyle = "#06C755"; // حاشیه سبز
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // نوشتن متن داخل کادر
+            ctx.fillStyle = "#1e293b"; // رنگ متن تیره
+            ctx.fillText(text, x, y);
+        }
+    </script>
+</body>
+</html>
